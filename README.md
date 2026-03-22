@@ -1,7 +1,7 @@
 # 💱 Conversor de Moneda - Android Jetpack Compose
 
 <p align="center">
-  <img src="./screenshots/Menu.png" alt="Menu de la aplicación" width="300">
+  <img src="./screenshots/ConversorDeMonedas.png" alt="Menu de la aplicación" width="300">
 </p>
 
 ## 📋 Enunciado y Solución
