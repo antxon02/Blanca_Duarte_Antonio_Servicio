@@ -1,47 +1,67 @@
 package com.example.blanca_duarte_antonio_servicio
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.blanca_duarte_antonio_servicio.data.worker.ExchangeRateWorker
+import com.example.blanca_duarte_antonio_servicio.ui.screen.ConverterScreen
 import com.example.blanca_duarte_antonio_servicio.ui.theme.Blanca_Duarte_Antonio_ServicioTheme
+import com.example.blanca_duarte_antonio_servicio.ui.viewmodel.ConverterViewModel
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
+    private val viewModel: ConverterViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+
+            }.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        setupWorkManager()
+
         setContent {
             Blanca_Duarte_Antonio_ServicioTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    ConverterScreen(viewModel)
                 }
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    private fun setupWorkManager() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    Blanca_Duarte_Antonio_ServicioTheme {
-        Greeting("Android")
+        val workRequest = PeriodicWorkRequestBuilder<ExchangeRateWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "UpdateRateWork",
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
     }
 }
+
